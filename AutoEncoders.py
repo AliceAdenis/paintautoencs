@@ -1,13 +1,11 @@
 import logging
 log = logging.getLogger(__name__)
 
-from abc import ABC, abstractmethod
-
 import torch.nn as nn
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # MIXIN AUTOENCODER (to mix with nn.Module)
-class MixinAE(ABC):
+class MixinAE():
     """Mixin class for autoencoders.
     """
 
@@ -44,28 +42,6 @@ class MixinAE(ABC):
         for v in X.shape[1:]:
             s = s*v
         return s
-
-
-    @abstractmethod
-    def encode(self, X):
-        """Absract method for encoding.
-        """
-        pass
-
-
-    @abstractmethod
-    def decode(self, X):
-        """Absract method for decoding.
-        """
-        pass
-
-
-    def forward(self, X):
-        """Forward step for each autoencoder.
-        """
-        X = self.encode(X)
-        X = self.decode(X)
-        return X
 
 
 
