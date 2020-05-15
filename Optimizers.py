@@ -15,7 +15,12 @@ class Optimizer():
     """Pytoch optimizer for autoencoder.
     """
 
-    def __init__(self, autoenc, loss_func, optimizer, path_model=None):
+    def __init__(self,
+                 autoenc,
+                 loss_func,
+                 optimizer,
+                 path_model=None,
+                 level_treshold=None):
         """Instantiate the optimizer.
         """
         log.info('instantiate optimization')
@@ -23,6 +28,7 @@ class Optimizer():
         self.loss_func = loss_func
         self.optim = optimizer
         self.path_model = path_model
+        self.level_treshold = level_treshold
 
         self.epoch = 0
         if self.path_model:
@@ -61,6 +67,7 @@ class Optimizer():
         log.info('epoch %d - loss train: %.6f' % (self.epoch, loss))
         self.epoch += 1
 
+        return loss
 
     def _save_epoch(self):
         log.info('saving epoch %s', self.epoch)
@@ -81,7 +88,7 @@ class Optimizer():
         log.info('start training autoencoder')
 
         for i in range(n_epoch):
-            self._epoch(dataset, batch_size)
+            loss = self._epoch(dataset, batch_size)
 
             if self.epoch % n_save == (n_save - 1):
                 self._save_epoch()
@@ -89,6 +96,10 @@ class Optimizer():
 
                 if save_fig:
                     self.plot_sample(dataset, save_fig, 1)
+
+                if self.level_treshold and loss < self.level_treshold:
+                    self.autoenc.add_level()
+                    log.info('increasing level to %s', self.autoenc.level)
 
         if last_saved != self.epoch:
             self._save_epoch()
@@ -108,15 +119,16 @@ class Optimizer():
                 plt.subplot(n_sample, 2, 2 * i + 1)
                 plt.imshow(transforms.ToPILImage()(img1_tmp),
                            interpolation="bicubic")
+                plt.axis('off')
 
                 plt.subplot(n_sample, 2, 2 * i + 2)
                 plt.imshow(transforms.ToPILImage()(img2_tmp),
                            interpolation="bicubic")
+                plt.axis('off')
 
                 if i == n_sample - 1:
                     break
 
-            plt.axis('off')
             plt.tight_layout()
             plt.savefig(os.path.join(path_result, 'sample'+str(self.epoch)+'.png'))
 

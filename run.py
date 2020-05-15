@@ -8,7 +8,7 @@ import torchvision.transforms as transforms
 import torch.nn.functional as F
 import torch.optim as optim
 
-from AutoEncoders import AEPaintingsV0, AEPortraitV1
+from AutoEncoders import AEPaintingsV0, AEPortraitV1, AEPortraitV2
 from Datasets import DatasetPaintings
 from Optimizers import Optimizer
 
@@ -16,15 +16,16 @@ from Optimizers import Optimizer
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # PARAMETERS
 path_raw = '/srv/data/data_peinture/data/processed/portraits'
-path_autoencoders = '/srv/data/data_peinture/models/autoenc_paintings_V1'
-path_results = '/srv/data/data_peinture/data/results/portraits'
+path_autoencoders = '/srv/data/data_peinture/models/autoenc_paintings_V2'
+path_results = '/srv/data/data_peinture/data/results/portraits_V2'
 
-image_size = 193
-autoenc_key = "portraitv1"
+image_size = 149
+autoenc_key = "portraitv2"
 
 dict_autoencs = {
     "paintingsv0": AEPaintingsV0,
-    "portraitv1": AEPortraitV1
+    "portraitv1": AEPortraitV1,
+    "portraitv2": AEPortraitV2,
 }
 
 
@@ -39,7 +40,9 @@ if __name__ == '__main__':
                  if f.split('.')[-1] == 'jpg']
 
     transf = transforms.Compose([
-        transforms.RandomCrop(size=image_size),
+        #transforms.CenterCrop(size=image_size),
+        #transforms.RandomCrop(size=image_size),
+        transforms.RandomResizedCrop(size=image_size),
         transforms.ToTensor(),
         transforms.Lambda(
             lambda tens: tens.view([1, 3, image_size, image_size]))
@@ -54,11 +57,12 @@ if __name__ == '__main__':
     optim = Optimizer(
         autoenc=autoenc,
         loss_func=F.mse_loss,
-        optimizer=optim.Adam(autoenc.parameters(), lr=2e-3),
-        path_model=path_autoencoders
+        optimizer=optim.Adam(autoenc.parameters(), lr=1e-3),
+        path_model=path_autoencoders,
+        level_treshold=0.05
     )
 
-    optim.optimize(dataset, n_epoch=1000, save_fig=path_results)
+    optim.optimize(dataset, n_epoch=100, n_save=10, save_fig=path_results)
 
     #optim.plot_loss(dataset, path_results)
     #optim.plot_sample(dataset, path_results, n_sample=2)
