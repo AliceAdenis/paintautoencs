@@ -40,9 +40,9 @@ if __name__ == '__main__':
                  if f.split('.')[-1] == 'jpg']
 
     transf = transforms.Compose([
-        #transforms.CenterCrop(size=image_size),
+        transforms.CenterCrop(size=image_size),
         #transforms.RandomCrop(size=image_size),
-        transforms.RandomResizedCrop(size=image_size),
+        #transforms.RandomResizedCrop(size=image_size),
         transforms.ToTensor(),
         transforms.Lambda(
             lambda tens: tens.view([1, 3, image_size, image_size]))
@@ -59,10 +59,10 @@ if __name__ == '__main__':
         loss_func=F.mse_loss,
         optimizer=optim.Adam(autoenc.parameters(), lr=1e-3),
         path_model=path_autoencoders,
-        level_treshold=0.05
+        level_treshold=0.10
     )
 
-    optim.optimize(dataset, n_epoch=100, n_save=10, save_fig=path_results)
+    optim.optimize(dataset, n_epoch=400, n_save=20, save_fig=path_results)
 
     #optim.plot_loss(dataset, path_results)
     #optim.plot_sample(dataset, path_results, n_sample=2)

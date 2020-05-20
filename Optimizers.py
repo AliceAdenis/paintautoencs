@@ -9,6 +9,8 @@ import torchvision.transforms as transforms
 
 import matplotlib.pyplot as plt
 
+from helpers import dump_json, read_json
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # OPTIMIZER
 class Optimizer():
@@ -30,6 +32,9 @@ class Optimizer():
         self.path_model = path_model
         self.level_treshold = level_treshold
 
+        self.path_metadata = os.path.join(
+            self.path_model, 'metadata.json')
+
         self.epoch = 0
         if self.path_model:
             log.info('checking previous epoch')
@@ -43,8 +48,18 @@ class Optimizer():
 
 
     def _get_state_dict(self, epoch):
+        log.info('loading epoch %s', epoch)
         self.autoenc.load_state_dict(
             torch.load(os.path.join(self.path_model, str(epoch)+'.pth')))
+
+        if os.path.isfile(self.path_metadata):
+            dict_levels = read_json(self.path_metadata)
+            if str(epoch) in dict_levels:
+                if 'level' in dict_levels[str(epoch)]:
+                    log.info("set level to %s",
+                             dict_levels[str(epoch)]['level'])
+                    self.autoenc.level = dict_levels[str(epoch)]['level']
+
         self.autoenc.eval()
 
 
@@ -75,6 +90,16 @@ class Optimizer():
             self.autoenc.state_dict(),
             os.path.join(self.path_model, str(self.epoch)+'.pth'))
 
+        if self.level_treshold:
+            if os.path.isfile(self.path_metadata):
+                dict_levels = read_json(self.path_metadata)
+            else:
+                dict_levels = {}
+
+            dict_levels[str(self.epoch)] = {}
+            dict_levels[str(self.epoch)]['level'] = self.autoenc.level
+
+            dump_json(dict_levels, self.path_metadata)
 
 
     def optimize(self,
@@ -99,7 +124,7 @@ class Optimizer():
 
                 if self.level_treshold and loss < self.level_treshold:
                     self.autoenc.add_level()
-                    log.info('increasing level to %s', self.autoenc.level)
+                    log.info('set level to %s', self.autoenc.level)
 
         if last_saved != self.epoch:
             self._save_epoch()
@@ -131,6 +156,7 @@ class Optimizer():
 
             plt.tight_layout()
             plt.savefig(os.path.join(path_result, 'sample'+str(self.epoch)+'.png'))
+            plt.close()
 
 
     def plot_loss(self, dataset, path_result, batch_size=10):
@@ -140,7 +166,6 @@ class Optimizer():
 
         list_loss = []
         for epoch in list_models:
-            log.info('loss on epoch %s', epoch)
             self._get_state_dict(epoch)
             with torch.no_grad():
                 loss_train = []
@@ -155,3 +180,4 @@ class Optimizer():
         plt.ylabel('Loss')
         plt.tight_layout()
         plt.savefig(os.path.join(path_result, 'loss.png'))
+        plt.close()

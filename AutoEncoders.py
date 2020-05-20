@@ -370,7 +370,10 @@ class AEPortraitV2(nn.Module, MixinAE):
             X = F.relu(self.dlin4(X))
 
         if self.level > 2:
-            X = X.view(X.shape[0], self.s3_0[1], self.s3_0[2], self.s3_0[3])
+            X = X.view(
+                X.shape[0],
+                self.s3_0[1], self.s3_0[2],
+                self.s3_0[3], self.s3_0[4])
             X = F.relu(self.deconv3(X))
 
         if self.level > 1:
