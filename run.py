@@ -29,7 +29,6 @@ dict_autoencs = {
 }
 
 
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if __name__ == '__main__':
     log.info('training autoencoder')
