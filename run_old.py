@@ -14,9 +14,9 @@ from Optimizers import Optimizer
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # PARAMETERS
-path_raw = '/srv/data/data_peinture/data/processed/portraits'
-path_autoencoders = '/srv/data/data_peinture/models/autoenc_paintings_V2'
-path_results = '/srv/data/data_peinture/data/results/portraits_V2'
+raw_path = '/srv/data/data_peinture/data/processed/portraits'
+autoencoders_path = '/srv/data/data_peinture/models/autoenc_paintings_V2'
+results_path = '/srv/data/data_peinture/data/results/portraits_V2'
 
 image_size = 149
 autoenc_key = "portraitv2"
@@ -36,7 +36,7 @@ if __name__ == '__main__':
 
     # Dataset
     log.info('loading data')
-    list_path = [os.path.join(path_raw, f) for f in os.listdir(path_raw)
+    path_list = [os.path.join(raw_path, f) for f in os.listdir(raw_path)
                  if f.split('.')[-1] == 'jpg']
 
     transf = transforms.Compose([
@@ -48,7 +48,7 @@ if __name__ == '__main__':
             lambda tens: tens.view([1, 3, image_size, image_size]))
     ])
 
-    dataset = DatasetPaintings(list_path, transform=transf)
+    dataset = DatasetPaintings(path_list, transform=transf)
 
     # Autoencoder
     autoenc = dict_autoencs[autoenc_key](image_size)
@@ -58,11 +58,11 @@ if __name__ == '__main__':
         autoenc=autoenc,
         loss_func=func.mse_loss,
         optimizer=optim.Adam(autoenc.parameters(), lr=1e-3),
-        path_model=path_autoencoders,
+        path_model=autoencoders_path,
         level_treshold=0.10
     )
 
-    optim.optimize(dataset, n_epoch=400, n_save=20, save_fig=path_results)
+    optim.optimize(dataset, n_epoch=400, n_save=20, save_fig=results_path)
 
     # optim.plot_loss(dataset, path_results)
     # optim.plot_sample(dataset, path_results, n_sample=2)
