@@ -2,7 +2,7 @@ import logging
 log = logging.getLogger(__name__)  # noqa: E402
 
 import os
-import shutil
+# import shutil
 import configparser
 
 from torch import manual_seed as torch_manual_seed
@@ -40,9 +40,11 @@ if __name__ == '__main__':
     logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
     # Path
-    if os.path.isdir(report_path):
-        shutil.rmtree(report_path)
-    os.mkdir(report_path)
+    utl.folder(report_path)
+    utl.folder(autoencoders_path)
+    results_path = os.path.join(report_path, 'result_samples')
+    utl.folder(results_path)
+
 
     # Dataset
     log.info('loading data from %s', raw_data_path)
@@ -75,15 +77,12 @@ if __name__ == '__main__':
     autoenc = AEPortraitV2(image_size)
 
     # Optimization
-    utl.folder(autoencoders_path)
     optim = Optimizer(
         autoenc=autoenc,
         loss_func=func.mse_loss,
         optimizer=optim.Adam(autoenc.parameters(), lr=1e-3),
         path_model=autoencoders_path,
-        level_treshold=0.10
+        level_treshold=0.3
     )
 
-    results_path = os.path.join(report_path, 'results')
-    utl.folder(results_path)
-    optim.optimize(dataset, n_epoch=400, n_save=20, save_fig=results_path)
+    optim.optimize(dataset, n_epoch=400, n_save=5, save_fig=results_path)

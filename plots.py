@@ -55,12 +55,23 @@ def plot_compare_data(img1, img2, fig_path=None):
     save_fig(fig_path)
 
 
-def plot_loss(list_loss_train, list_loss_val):
-    """"""
+def plot_loss(list_loss_train, list_loss_val, fig_path=None):
+    """Plot the loss.
+
+    Parameters
+    ----------
+    list_loss_train: list of float
+        The list of training loss.
+    list_loss_val: list of float
+        The list of validation loss
+    fig_path: str
+        The path to the image to save.
+    """
     plt.figure(figsize=(12, 4))
     plt.plot(list_loss_train, color='royalblue', label='Train')
     plt.plot(list_loss_val, color='red', label='Validation')
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.legend()
-    plt.show()
+
+    save_fig(fig_path)

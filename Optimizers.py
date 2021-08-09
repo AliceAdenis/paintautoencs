@@ -12,18 +12,13 @@ import matplotlib.pyplot as plt
 from helpers import dump_json, read_json
 
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # OPTIMIZER
 class Optimizer():
     """Pytorch optimizer for autoencoder.
     """
 
-    def __init__(self,
-                 autoenc,
-                 loss_func,
-                 optimizer,
-                 path_model=None,
-                 level_treshold=None):
+    def __init__(self, autoenc, loss_func, optimizer, path_model=None, level_treshold=None):
         """Instantiate the optimizer.
         """
         log.info('instantiate optimization')
@@ -76,7 +71,7 @@ class Optimizer():
 
             loss_train.append(loss_train_subset)
 
-        loss = np.sum(loss_train)
+        loss = torch.sum(torch.stack(loss_train))
 
         log.info('epoch %d - loss train: %.6f' % (self.epoch, loss))
         self.epoch += 1
@@ -153,7 +148,7 @@ class Optimizer():
                     break
 
             plt.tight_layout()
-            plt.savefig(os.path.join(path_result, 'sample'+str(self.epoch)+'.png'))
+            plt.savefig(os.path.join(path_result, 'sample' + str(self.epoch) + '.png'))
             plt.close()
 
     def plot_loss(self, dataset, path_result, batch_size=10):

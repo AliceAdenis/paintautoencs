@@ -1,11 +1,12 @@
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger(__name__)  # noqa: E402
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+import torch.nn.functional as func
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # MIXIN AUTOENCODER (to mix with nn.Module)
 class MixinAE():
     """Mixin class for autoencoders.
@@ -14,6 +15,8 @@ class MixinAE():
     def _info(self, name, X, get_size=True):
         """Log the shape information about the current tensor.
 
+        Parameters
+        ----------
         name: str
             Id of the step.
         X: torch.Tensor
@@ -25,7 +28,6 @@ class MixinAE():
             log.info('%s: %s - %s', name, X.shape, self._size(X))
         else:
             log.info('%s: %s', name, X.shape)
-
 
     def _size(self, X):
         """Returns the total number of parameters in the given tensor.
@@ -45,7 +47,8 @@ class MixinAE():
             s = s*v
         return s
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # V0
 class AEPaintingsV0(nn.Module, MixinAE):
     """V0 Autoencoder designed for my paintings.
@@ -53,10 +56,7 @@ class AEPaintingsV0(nn.Module, MixinAE):
 
     def __init__(self, image_size, encoded_size=100):
         super().__init__()
-        log.info(
-            "initialize autoenc with image size %s and encoded size %s",
-            image_size,
-            encoded_size)
+        log.info("initialize autoenc with image size %s and encoded size %s", image_size, encoded_size)
 
         self.s0 = (1, 1, 3, image_size, image_size)
         X = torch.rand(self.s0)
@@ -114,27 +114,24 @@ class AEPaintingsV0(nn.Module, MixinAE):
         X = X[:self.s0[0], :self.s0[1], :self.s0[2], :self.s0[3], :self.s0[4]]
         self._info('final', X)
 
-
     def encode(self, X):
-        X = F.relu(self.conv1(X))
-        X = F.relu(self.conv2(X))
-        X = F.relu(self.conv3(X))
+        X = func.relu(self.conv1(X))
+        X = func.relu(self.conv2(X))
+        X = func.relu(self.conv3(X))
         X = X.view((X.shape[0], -1))
-        X = F.relu(self.elin4(X))
-        X = F.relu(self.elin5(X))
+        X = func.relu(self.elin4(X))
+        X = func.relu(self.elin5(X))
         return X
 
-
     def decode(self, X):
-        X = F.relu(self.dlin5(X))
-        X = F.relu(self.dlin4(X))
+        X = func.relu(self.dlin5(X))
+        X = func.relu(self.dlin4(X))
         X = X.view(X.shape[0], self.s3_0[1], self.s3_0[2], self.s3_0[3], self.s3_0[4])
-        X = F.relu(self.deconv3(X))
-        X = F.relu(self.deconv2(X))
+        X = func.relu(self.deconv3(X))
+        X = func.relu(self.deconv2(X))
         X = torch.sigmoid(self.deconv1(X))
         X = X[:, :self.s0[1], :self.s0[2], :self.s0[3], :self.s0[4]]
         return X
-
 
     def forward(self, X):
         """Forward step for each autoencoder.
@@ -143,7 +140,8 @@ class AEPaintingsV0(nn.Module, MixinAE):
         X = self.decode(X)
         return X
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # V1
 class AEPortraitV1(nn.Module, MixinAE):
     """V0 Autoencoder designed for my paintings.
@@ -151,10 +149,7 @@ class AEPortraitV1(nn.Module, MixinAE):
 
     def __init__(self, image_size, encoded_size=100):
         super().__init__()
-        log.info(
-            "initialize autoenc with image size %s and encoded size %s",
-            image_size,
-            encoded_size)
+        log.info("initialize autoenc with image size %s and encoded size %s", image_size, encoded_size)
 
         self.s0 = (1, 1, 3, image_size, image_size)
         X = torch.rand(self.s0)
@@ -222,31 +217,28 @@ class AEPortraitV1(nn.Module, MixinAE):
         X = X[:self.s0[0], :self.s0[1], :self.s0[2], :self.s0[3], :self.s0[4]]
         self._info('final', X)
 
-
     def encode(self, X):
-        X = F.relu(self.conv1(X))
+        X = func.relu(self.conv1(X))
         X = torch.squeeze(X, 2)
-        X = F.relu(self.conv2(X))
+        X = func.relu(self.conv2(X))
         X, self.ind_pool = self.conv2_5(X)
-        X = F.relu(self.conv3(X))
+        X = func.relu(self.conv3(X))
         X = X.view((X.shape[0], -1))
-        X = F.relu(self.elin4(X))
-        X = F.relu(self.elin5(X))
+        X = func.relu(self.elin4(X))
+        X = func.relu(self.elin5(X))
         return X
 
-
     def decode(self, X):
-        X = F.relu(self.dlin5(X))
-        X = F.relu(self.dlin4(X))
+        X = func.relu(self.dlin5(X))
+        X = func.relu(self.dlin4(X))
         X = X.view(X.shape[0], self.s3_0[1], self.s3_0[2], self.s3_0[3])
-        X = F.relu(self.deconv3(X))
+        X = func.relu(self.deconv3(X))
         X = self.unpool2_5(X, self.ind_pool)
-        X = F.relu(self.deconv2(X))
+        X = func.relu(self.deconv2(X))
         X = torch.unsqueeze(X, 2)
         X = torch.sigmoid(self.deconv1(X))
         X = X[:, :self.s0[1], :self.s0[2], :self.s0[3], :self.s0[4]]
         return X
-
 
     def forward(self, X):
         """Forward step for each autoencoder.
@@ -255,7 +247,8 @@ class AEPortraitV1(nn.Module, MixinAE):
         X = self.decode(X)
         return X
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # V2
 class AEPortraitV2(nn.Module, MixinAE):
     """V0 Autoencoder designed for my paintings.
@@ -263,10 +256,7 @@ class AEPortraitV2(nn.Module, MixinAE):
 
     def __init__(self, image_size, encoded_size=100, level=None):
         super().__init__()
-        log.info(
-            "initialize autoenc with image size %s and encoded size %s",
-            image_size,
-            encoded_size)
+        log.info("initialize autoenc with image size %s and encoded size %s", image_size, encoded_size)
 
         self.level = level
         if not level:
@@ -342,48 +332,46 @@ class AEPortraitV2(nn.Module, MixinAE):
             self.level += 1
 
     def encode(self, X):
-        X = F.relu(self.conv1(X))
+        X = func.relu(self.conv1(X))
 
         if self.level > 1:
-            X = F.relu(self.conv2(X))
+            X = func.relu(self.conv2(X))
             X, self.ind_pool = self.conv2_5(X)
 
         if self.level > 2:
-            X = F.relu(self.conv3(X))
+            X = func.relu(self.conv3(X))
             X = X.view((X.shape[0], -1))
 
         if self.level > 3:
-            X = F.relu(self.elin4(X))
+            X = func.relu(self.elin4(X))
 
         if self.level > 4:
-            X = F.relu(self.elin5(X))
+            X = func.relu(self.elin5(X))
 
         return X
-
 
     def decode(self, X):
 
         if self.level > 4:
-            X = F.relu(self.dlin5(X))
+            X = func.relu(self.dlin5(X))
 
         if self.level > 3:
-            X = F.relu(self.dlin4(X))
+            X = func.relu(self.dlin4(X))
 
         if self.level > 2:
             X = X.view(
                 X.shape[0],
                 self.s3_0[1], self.s3_0[2],
                 self.s3_0[3], self.s3_0[4])
-            X = F.relu(self.deconv3(X))
+            X = func.relu(self.deconv3(X))
 
         if self.level > 1:
             X = self.unpool2_5(X, self.ind_pool)
-            X = F.relu(self.deconv2(X))
+            X = func.relu(self.deconv2(X))
 
         X = torch.sigmoid(self.deconv1(X))
         X = X[:, :self.s0[1], :self.s0[2], :self.s0[3], :self.s0[4]]
         return X
-
 
     def forward(self, X):
         """Forward step for each autoencoder.
