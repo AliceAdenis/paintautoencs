@@ -16,13 +16,11 @@ class BaseDataset(ABC, Dataset):
         """
         pass
 
-
     @abstractmethod
     def __len__(self):
-        """Abstract method to return lenght of dataset.
+        """Abstract method to return length of dataset.
         """
         pass
-
 
     @abstractmethod
     def __getitem__(self, index):
@@ -35,9 +33,8 @@ class BaseDataset(ABC, Dataset):
         """
         pass
 
-
     def load_batches(self, batch_size=10, **kwargs):
-        '''Iterator to load bacthes.
+        """Iterator to load batches.
 
         Parameters
         ----------
@@ -45,44 +42,41 @@ class BaseDataset(ABC, Dataset):
             Size of the batches.
         **kwargs
             Other arguments to pass to `torch.utils.data.DataLoader`.
-        '''
+        """
         return DataLoader(self, batch_size=batch_size, **kwargs)
-
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # DATASET PAINTINGS
 class DatasetPaintings(BaseDataset):
-    '''Data Loader for paintings (or for any image).
-    '''
+    """Data Loader for paintings (or for any image).
+    """
 
-    def __init__(self, list_path, transform=None):
-        '''Initialisation of the class.
+    def __init__(self, path_list, transform=None):
+        """Initialisation of the class.
 
         Parameters
         ----------
-        list_path: list of str
+        path_list: list of str
             List that contain the list of images path to be loaded.
         transform: callable (optional)
             Optional transform to be applied on a sample.
-        '''
-        self.list_path = list_path
+        """
+        self.path_list = path_list
         self.transform = transform
 
-
     def __len__(self):
-        '''Returns the lenght of the dataset.
+        """Returns the length of the dataset.
 
         Return
         ------
         int
             The length of the dataset.
-        '''
-        return len(self.list_path)
-
+        """
+        return len(self.path_list)
 
     def __getitem__(self, index):
-        '''Load the data corresponding to an index, and apply the
+        """Load the data corresponding to an index, and apply the
         transforms requested in the initialisation.
 
         Parameters
@@ -95,11 +89,10 @@ class DatasetPaintings(BaseDataset):
         dict
             The data requested by the index. For example, for image classifier:
             ``{'image': image, 'category': category}``
-        '''
+        """
 
-        image = Image.open(self.list_path[index])
+        image = Image.open(self.path_list[index])
         if self.transform:
             image = self.transform(image)
 
         return image
-

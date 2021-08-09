@@ -1,5 +1,5 @@
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger(__name__)  # noqa: E402
 
 import os
 import numpy as np
@@ -11,18 +11,14 @@ import matplotlib.pyplot as plt
 
 from helpers import dump_json, read_json
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # OPTIMIZER
 class Optimizer():
-    """Pytoch optimizer for autoencoder.
+    """Pytorch optimizer for autoencoder.
     """
 
-    def __init__(self,
-                 autoenc,
-                 loss_func,
-                 optimizer,
-                 path_model=None,
-                 level_treshold=None):
+    def __init__(self, autoenc, loss_func, optimizer, path_model=None, level_treshold=None):
         """Instantiate the optimizer.
         """
         log.info('instantiate optimization')
@@ -38,14 +34,13 @@ class Optimizer():
         self.epoch = 0
         if self.path_model:
             log.info('checking previous epoch')
-            list_models = [int(f.split('.')[0]) for f in os.listdir(self.path_model) \
+            list_models = [int(f.split('.')[0]) for f in os.listdir(self.path_model)
                            if f.split('.')[-1] == 'pth']
             if len(list_models) > 0:
                 self.epoch = np.max(list_models)
                 self._get_state_dict(self.epoch)
 
         log.info('starting at epoch %s', self.epoch)
-
 
     def _get_state_dict(self, epoch):
         log.info('loading epoch %s', epoch)
@@ -62,7 +57,6 @@ class Optimizer():
 
         self.autoenc.eval()
 
-
     def _epoch(self, dataset, batch_size=10):
         """Run one epoch.
         """
@@ -77,7 +71,7 @@ class Optimizer():
 
             loss_train.append(loss_train_subset)
 
-        loss = np.sum(loss_train)
+        loss = torch.sum(torch.stack(loss_train))
 
         log.info('epoch %d - loss train: %.6f' % (self.epoch, loss))
         self.epoch += 1
@@ -101,7 +95,6 @@ class Optimizer():
 
             dump_json(dict_levels, self.path_metadata)
 
-
     def optimize(self,
                  dataset,
                  n_epoch=100,
@@ -111,6 +104,7 @@ class Optimizer():
         """Run the optimization.
         """
         log.info('start training autoencoder')
+        last_saved = None
 
         for i in range(n_epoch):
             loss = self._epoch(dataset, batch_size)
@@ -128,7 +122,6 @@ class Optimizer():
 
         if last_saved != self.epoch:
             self._save_epoch()
-
 
     def plot_sample(self, dataset, path_result, n_sample=2, shuffle=True):
         log.info("saving sample")
@@ -155,14 +148,13 @@ class Optimizer():
                     break
 
             plt.tight_layout()
-            plt.savefig(os.path.join(path_result, 'sample'+str(self.epoch)+'.png'))
+            plt.savefig(os.path.join(path_result, 'sample' + str(self.epoch) + '.png'))
             plt.close()
-
 
     def plot_loss(self, dataset, path_result, batch_size=10):
         log.info("calculating loss")
-        list_models = sorted([int(f.split('.')[0]) for f in os.listdir(self.path_model) \
-                     if f.split('.')[-1] == 'pth'])
+        list_models = sorted([int(f.split('.')[0]) for f in os.listdir(self.path_model)
+                              if f.split('.')[-1] == 'pth'])
 
         list_loss = []
         for epoch in list_models:

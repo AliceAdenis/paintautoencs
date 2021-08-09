@@ -1,69 +1,88 @@
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger(__name__)  # noqa: E402
 
 import os
-logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
+# import shutil
+import configparser
 
+from torch import manual_seed as torch_manual_seed
 import torchvision.transforms as transforms
-import torch.nn.functional as F
-import torch.optim as optim
+import torch.nn.functional as func
+from torch import optim
 
-from AutoEncoders import AEPaintingsV0, AEPortraitV1, AEPortraitV2
 from Datasets import DatasetPaintings
+from AutoEncoders import AEPortraitV2
 from Optimizers import Optimizer
 
+from plots import plot_data
+import utl
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # PARAMETERS
-path_raw = '/srv/data/data_peinture/data/processed/portraits'
-path_autoencoders = '/srv/data/data_peinture/models/autoenc_paintings_V2'
-path_results = '/srv/data/data_peinture/data/results/portraits_V2'
+config = configparser.ConfigParser()
+config.read('config.ini')
 
-image_size = 149
-autoenc_key = "portraitv2"
+data_path = config['DEFAULT']['data_path']
+raw_data_path = os.path.join(data_path, config['DEFAULT']['raw_data_path'])
+report_path = os.path.join(data_path, config['DEFAULT']['report_path'])
+autoencoders_path = os.path.join(data_path, config['DEFAULT']['autoencoders_path'])
 
-dict_autoencs = {
-    "paintingsv0": AEPaintingsV0,
-    "portraitv1": AEPortraitV1,
-    "portraitv2": AEPortraitV2,
-}
+image_size = int(config['DEFAULT']['image_size'])
+torch_seed = int(config['DEFAULT']['torch_seed'])
+
+torch_manual_seed(torch_seed)
 
 
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# MAIN
 if __name__ == '__main__':
-    log.info('training autoencoder')
+    logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
+
+    # Path
+    utl.folder(report_path)
+    utl.folder(autoencoders_path)
+    results_path = os.path.join(report_path, 'result_samples')
+    utl.folder(results_path)
+
 
     # Dataset
-    log.info('loading data')
-    list_path = [os.path.join(path_raw, f) for f in os.listdir(path_raw) \
-                 if f.split('.')[-1] == 'jpg']
+    log.info('loading data from %s', raw_data_path)
+    path_list = [os.path.join(raw_data_path, f) for f in os.listdir(raw_data_path)
+                 if os.path.splitext(f)[1] == '.jpg']
+    log.debug('list of images: %s', path_list)
 
     transf = transforms.Compose([
-        transforms.CenterCrop(size=image_size),
-        #transforms.RandomCrop(size=image_size),
-        #transforms.RandomResizedCrop(size=image_size),
+        transforms.Resize(size=(image_size, image_size)),
+        # transforms.CenterCrop(size=(image_size, image_size)),
+        # transforms.RandomCrop(size=(image_size, image_size)),
+        # transforms.RandomResizedCrop(size=(image_size, image_size)),
         transforms.ToTensor(),
         transforms.Lambda(
             lambda tens: tens.view([1, 3, image_size, image_size]))
     ])
 
-    dataset = DatasetPaintings(list_path, transform=transf)
+    dataset = DatasetPaintings(path_list, transform=transf)
+
+    # Plot input samples
+    for T in dataset.load_batches():
+        log.info('batch: %s', T.shape)
+        input_sample_path = os.path.join(report_path, 'input_samples')
+        utl.folder(input_sample_path)
+        for i, img in enumerate(T):
+            plot_data(img, os.path.join(input_sample_path, 'figure_' + str(i) + '.jpg'))
+        break
 
     # Autoencoder
-    autoenc = dict_autoencs[autoenc_key](image_size)
+    autoenc = AEPortraitV2(image_size)
 
     # Optimization
     optim = Optimizer(
         autoenc=autoenc,
-        loss_func=F.mse_loss,
+        loss_func=func.mse_loss,
         optimizer=optim.Adam(autoenc.parameters(), lr=1e-3),
-        path_model=path_autoencoders,
-        level_treshold=0.10
+        path_model=autoencoders_path,
+        level_treshold=0.3
     )
 
-    optim.optimize(dataset, n_epoch=400, n_save=20, save_fig=path_results)
-
-    #optim.plot_loss(dataset, path_results)
-    #optim.plot_sample(dataset, path_results, n_sample=2)
-
+    optim.optimize(dataset, n_epoch=400, n_save=5, save_fig=results_path)
